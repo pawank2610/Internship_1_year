@@ -1,0 +1,75 @@
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:Arial,sans-serif;
+}
+
+body{
+    height:100vh;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    background:linear-gradient(
+    135deg,
+    #667eea,
+    #764ba2
+    );
+}
+
+.container{
+
+    width:600px;
+
+    background:white;
+
+    padding:30px;
+
+    border-radius:15px;
+
+    text-align:center;
+
+    box-shadow:0 0 15px rgba(0,0,0,0.2);
+}
+
+h1{
+    margin-bottom:20px;
+}
+
+.quote-box{
+
+    margin:20px 0;
+}
+
+#quote{
+
+    font-size:22px;
+
+    margin-bottom:15px;
+}
+
+#author{
+
+    color:#555;
+}
+
+button{
+
+    padding:12px 20px;
+
+    margin:10px;
+
+    border:none;
+
+    border-radius:5px;
+
+    background:#3498db;
+
+    color:white;
+
+    cursor:pointer;
+}
+
+button:hover{
+    opacity:0.8;
+}

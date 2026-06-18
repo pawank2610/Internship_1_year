@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Password Generator</title>
+
+<style>
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:Arial,sans-serif;
+}
+
+body{
+    height:100vh;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    background:linear-gradient(135deg,#11998e,#38ef7d);
+}
+
+.container{
+    width:450px;
+    background:white;
+    padding:30px;
+    border-radius:15px;
+    box-shadow:0 0 15px rgba(0,0,0,0.2);
+}
+
+h1{
+    text-align:center;
+    margin-bottom:20px;
+}
+
+#password{
+    width:100%;
+    padding:12px;
+    margin-bottom:20px;
+    font-size:18px;
+    border:1px solid #ccc;
+    border-radius:5px;
+}
+
+.settings div{
+    margin:10px 0;
+}
+
+#length{
+    width:100%;
+    margin:10px 0;
+}
+
+button{
+    width:100%;
+    padding:12px;
+    margin-top:10px;
+    border:none;
+    border-radius:5px;
+    background:#3498db;
+    color:white;
+    font-size:16px;
+    cursor:pointer;
+}
+
+button:hover{
+    opacity:0.8;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <h1>Password Generator</h1>
+
+    <input
+        type="text"
+        id="password"
+        readonly>
+
+    <label>
+        Password Length:
+        <span id="lengthValue">12</span>
+    </label>
+
+    <input
+        type="range"
+        id="length"
+        min="4"
+        max="30"
+        value="12">
+
+    <div>
+        <input type="checkbox" id="uppercase" checked>
+        Uppercase Letters
+    </div>
+
+    <div>
+        <input type="checkbox" id="lowercase" checked>
+        Lowercase Letters
+    </div>
+
+    <div>
+        <input type="checkbox" id="numbers" checked>
+        Numbers
+    </div>
+
+    <div>
+        <input type="checkbox" id="symbols" checked>
+        Symbols
+    </div>
+
+    <button onclick="generatePassword()">
+        Generate Password
+    </button>
+
+    <button onclick="copyPassword()">
+        Copy Password
+    </button>
+
+</div>
+
+<script>
+
+const lengthSlider =
+document.getElementById("length");
+
+const lengthValue =
+document.getElementById("lengthValue");
+
+lengthSlider.addEventListener("input",()=>{
+
+    lengthValue.innerText =
+    lengthSlider.value;
+
+});
+
+function generatePassword(){
+
+    const uppercase =
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+
+    const lowercase =
+    "abcdefghijklmnopqrstuvwxyz";
+
+    const numbers =
+    "0123456789";
+
+    const symbols =
+    "!@#$%^&*()_+-=[]{}";
+
+    let characters = "";
+
+    if(document.getElementById("uppercase").checked){
+        characters += uppercase;
+    }
+
+    if(document.getElementById("lowercase").checked){
+        characters += lowercase;
+    }
+
+    if(document.getElementById("numbers").checked){
+        characters += numbers;
+    }
+
+    if(document.getElementById("symbols").checked){
+        characters += symbols;
+    }
+
+    if(characters === ""){
+        alert("Select at least one option");
+        return;
+    }
+
+    let password = "";
+
+    for(let i=0;i<lengthSlider.value;i++){
+
+        password += characters.charAt(
+            Math.floor(
+                Math.random() *
+                characters.length
+            )
+        );
+
+    }
+
+    document.getElementById("password").value =
+    password;
+}
+
+function copyPassword(){
+
+    const password =
+    document.getElementById("password");
+
+    navigator.clipboard.writeText(
+        password.value
+    );
+
+    alert("Password Copied!");
+}
+
+generatePassword();
+
+</script>
+
+</body>
+</html>

@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Async Weather Tracker</title>
+
+<style>
+
+body{
+    background: linear-gradient(135deg,black,skyblue);
+    color:white;
+    font-family: Arial, Helvetica, sans-serif;
+    display:flex;
+    justify-content:center;
+    padding:30px;
+    min-height:100vh;
+}
+
+.container{
+    width:100%;
+    max-width:850px;
+}
+
+h1{
+    text-align:center;
+    margin-bottom:20px;
+}
+.card{
+    background:rgba(255,255,255,0.12);
+    backdrop-filter:blur(8px);
+    padding:20px;
+    border-radius:12px;
+    margin-bottom:20px;
+    box-shadow:0 6px 15px rgba(0,0,0,0.4);
+}
+
+.grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:20px;
+}
+
+input{
+    padding:10px;
+    width:65%;
+    border-radius:6px;
+    border:none;
+    outline:none;
+}
+
+button{
+    padding:10px 15px;
+    background:#ff6b6b;
+    color:white;
+    border:none;
+    border-radius:6px;
+    cursor:pointer;
+    transition:0.3s;
+}
+
+button:hover{
+    background:#ff4757;
+}
+
+.hist-btn{
+    background:#1dd1a1;
+    color:black;
+    border:none;
+    margin:5px 5px 0 0;
+    padding:6px 12px;
+    border-radius:18px;
+    font-size:12px;
+    cursor:pointer;
+}
+
+.hist-btn:hover{
+    background:#10ac84;
+    color:white;
+}
+
+.row{
+    display:flex;
+    justify-content:space-between;
+    padding:10px 0;
+    border-bottom:1px solid rgba(255,255,255,0.2);
+}
+
+.console{
+    background:#111;
+    color:#00ff9c;
+    padding:15px;
+    border-radius:6px;
+    font-family:monospace;
+    height:120px;
+    overflow-y:auto;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<h1>Async Weather Tracker</h1>
+
+<div class="grid">
+
+<div class="card">
+
+<h3>Search City</h3>
+
+<input type="text" id="cityInput" placeholder="Enter city name">
+<button onclick="getWeatherData()">Search</button>
+
+<hr>
+
+<h4>Search History</h4>
+<div id="historyList"></div>
+
+</div>
+
+
+<div class="card">
+
+<h3>Weather Information</h3>
+
+<div id="weatherInfo">
+<p style="text-align:center;color:#ddd">
+Search a city to see weather details
+</p>
+</div>
+
+</div>
+
+</div>
+
+<div class="card">
+
+<h3>Console - Event Loop</h3>
+<hr>
+
+<div id="logBox" class="console"></div>
+
+</div>
+
+</div>
+
+
+<script>
+
+function addLog(text){
+
+var logBox = document.getElementById("logBox");
+
+logBox.innerHTML = logBox.innerHTML + "<div> > " + text + "</div>";
+
+}
+
+async function getWeatherData(historyCity){
+
+var city = historyCity || document.getElementById("cityInput").value;
+
+var infoDiv = document.getElementById("weatherInfo");
+
+if(city==""){
+alert("Please enter a city name");
+return;
+}
+
+document.getElementById("logBox").innerHTML="";
+
+addLog("1. Sync Start");
+
+setTimeout(function(){
+addLog("4. Macrotask: setTimeout finished");
+},0);
+
+Promise.resolve().then(function(){
+addLog("3. Microtask: Promise resolved");
+});
+
+addLog("2. Fetching API for " + city);
+
+try{
+
+var myKey="919d271dac1bb5318b47f53499249864";
+
+var url="https://api.openweathermap.org/data/2.5/weather?q="+city+"&units=metric&appid="+myKey;
+
+var response = await fetch(url);
+
+if(!response.ok){
+throw new Error("City not found");
+}
+
+var data = await response.json();
+
+
+infoDiv.innerHTML = `
+<div class="row"><b>City</b><span>${data.name}</span></div>
+<div class="row"><b>Temperature</b><span>${data.main.temp} °C</span></div>
+<div class="row"><b>Humidity</b><span>${data.main.humidity}%</span></div>
+<div class="row"><b>Wind Speed</b><span>${data.wind.speed} m/s</span></div>
+`;
+
+saveHistory(data.name);
+
+addLog("5. Weather data received");
+
+}
+catch(err){
+
+infoDiv.innerHTML="<p style='color:red;text-align:center'>Error: "+err.message+"</p>";
+
+addLog("Error: "+err.message);
+
+}
+
+addLog("6. Function finished");
+
+}
+
+
+function saveHistory(city){
+
+var list = JSON.parse(localStorage.getItem("savedCities")) || [];
+
+if(list.indexOf(city)===-1){
+
+list.push(city);
+
+localStorage.setItem("savedCities",JSON.stringify(list));
+
+showHistory();
+
+}
+
+}
+
+function showHistory(){
+
+var list = JSON.parse(localStorage.getItem("savedCities")) || ["Delhi","Mumbai","London","Indore"];
+
+var historyDiv = document.getElementById("historyList");
+
+historyDiv.innerHTML="";
+
+for(var i=0;i<list.length;i++){
+
+var btn=document.createElement("button");
+
+btn.className="hist-btn";
+
+btn.innerText=list[i];
+
+let cityName=list[i];
+
+btn.onclick=function(){
+getWeatherData(cityName);
+};
+
+historyDiv.appendChild(btn);
+
+}
+
+}
+
+window.onload = showHistory;
+
+</script>
+
+</body>
+</html>
