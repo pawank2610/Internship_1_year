@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Expense Tracker</title>
+
+<style>
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:Arial,sans-serif;
+}
+
+body{
+    background:#f4f4f4;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    min-height:100vh;
+}
+
+.container{
+    width:500px;
+    background:white;
+    padding:25px;
+    border-radius:10px;
+    box-shadow:0 0 15px rgba(0,0,0,0.2);
+}
+
+h1{
+    text-align:center;
+    margin-bottom:20px;
+}
+
+.balance{
+    text-align:center;
+    margin-bottom:20px;
+}
+
+.balance h2{
+    color:#27ae60;
+}
+
+input,select{
+    width:100%;
+    padding:12px;
+    margin:10px 0;
+}
+
+button{
+    width:100%;
+    padding:12px;
+    border:none;
+    background:#3498db;
+    color:white;
+    cursor:pointer;
+}
+
+button:hover{
+    opacity:0.8;
+}
+
+ul{
+    list-style:none;
+    margin-top:20px;
+}
+
+li{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:10px;
+    margin:10px 0;
+    background:#eee;
+}
+
+.income{
+    border-left:5px solid green;
+}
+
+.expense{
+    border-left:5px solid red;
+}
+
+.delete-btn{
+    background:red;
+    color:white;
+    border:none;
+    padding:5px 10px;
+    cursor:pointer;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<h1>Expense Tracker</h1>
+
+<div class="balance">
+<h3>Total Balance</h3>
+<h2 id="balance">₹0</h2>
+</div>
+
+<input
+type="text"
+id="description"
+placeholder="Description">
+
+<input
+type="number"
+id="amount"
+placeholder="Amount">
+
+<select id="type">
+<option value="income">Income</option>
+<option value="expense">Expense</option>
+</select>
+
+<button onclick="addTransaction()">
+Add Transaction
+</button>
+
+<ul id="transactionList"></ul>
+
+</div>
+
+<script>
+
+let transactions =
+JSON.parse(
+localStorage.getItem("transactions")
+) || [];
+
+displayTransactions();
+
+function addTransaction(){
+
+    const description =
+    document.getElementById("description")
+    .value;
+
+    const amount =
+    document.getElementById("amount")
+    .value;
+
+    const type =
+    document.getElementById("type")
+    .value;
+
+    if(description === "" || amount === ""){
+        alert("Fill all fields");
+        return;
+    }
+
+    transactions.push({
+
+        description,
+
+        amount:Number(amount),
+
+        type
+
+    });
+
+    saveData();
+
+    displayTransactions();
+
+    document.getElementById(
+    "description").value="";
+
+    document.getElementById(
+    "amount").value="";
+}
+
+function displayTransactions(){
+
+    const list =
+    document.getElementById(
+    "transactionList");
+
+    list.innerHTML="";
+
+    let balance = 0;
+
+    transactions.forEach(
+    (transaction,index)=>{
+
+        const li =
+        document.createElement("li");
+
+        li.classList.add(
+        transaction.type);
+
+        li.innerHTML=`
+
+        <span>
+        ${transaction.description}
+        -
+        ₹${transaction.amount}
+        </span>
+
+        <button
+        class="delete-btn"
+        onclick="deleteTransaction(${index})">
+        X
+        </button>
+
+        `;
+
+        list.appendChild(li);
+
+        if(transaction.type ===
+        "income"){
+
+            balance +=
+            transaction.amount;
+        }
+
+        else{
+
+            balance -=
+            transaction.amount;
+        }
+
+    });
+
+    document.getElementById(
+    "balance").innerText =
+    "₹" + balance;
+}
+
+function deleteTransaction(index){
+
+    transactions.splice(index,1);
+
+    saveData();
+
+    displayTransactions();
+}
+
+function saveData(){
+
+    localStorage.setItem(
+    "transactions",
+    JSON.stringify(transactions)
+    );
+}
+
+</script>
+
+</body>
+</html>
