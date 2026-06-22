@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Flick — Movie Search</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;1,9..40,400&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet" />
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0d0d0f;
+    --surface: #17171a;
+    --surface2: #1f1f23;
+    --border: rgba(255,255,255,0.08);
+    --border-hover: rgba(255,255,255,0.16);
+    --text: #f0eeea;
+    --text-muted: #888580;
+    --text-dim: #4a4845;
+    --accent: #e8c97a;
+    --accent-dim: rgba(232,201,122,0.12);
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
+    --radius-xl: 24px;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    line-height: 1.6;
+    min-height: 100vh;
+  }
+
+  /* Layout */
+  .page { max-width: 1100px; margin: 0 auto; padding: 0 24px 80px; }
+
+  /* Header */
+  header {
+    padding: 40px 0 32px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 32px;
+    display: flex;
+    align-items: baseline;
+    gap: 20px;
+    flex-wrap: wrap;
+  }
+  .logo {
+    font-family: 'DM Serif Display', serif;
+    font-size: 32px;
+    color: var(--text);
+    letter-spacing: -0.5px;
+  }
+  .logo em {
+    font-style: italic;
+    color: var(--accent);
+  }
+  .tagline {
+    font-size: 13px;
+    color: var(--text-muted);
+    letter-spacing: 0.04em;
+  }
+
+  /* Search */
+  .search-row {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+  .search-wrap {
+    flex: 1;
+    position: relative;
+  }
+  .search-icon {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-dim);
+    pointer-events: none;
+  }
+  #search {
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    color: var(--text);
+    font-family: inherit;
+    font-size: 15px;
+    padding: 12px 14px 12px 42px;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  #search::placeholder { color: var(--text-dim); }
+  #search:focus { border-color: var(--border-hover); }
+
+  .clear-btn {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: var(--text-dim);
+    cursor: pointer;
+    font-size: 18px;
+    line-height: 1;
+    padding: 2px;
+    display: none;
+  }
+  .clear-btn.visible { display: block; }
+
+  /* Filters */
+  .filter-row {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 28px;
+    align-items: center;
+  }
+  .filter-label {
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-right: 4px;
+  }
+  .pill {
+    padding: 5px 14px;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text-muted);
+    font-family: inherit;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.15s;
+    white-space: nowrap;
+  }
+  .pill:hover { border-color: var(--border-hover); color: var(--text); }
+  .pill.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #1a1400;
+    font-weight: 500;
+  }
+
+  /* Sort */
+  .bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .count {
+    font-size: 13px;
+    color: var(--text-dim);
+  }
+  .sort-group { display: flex; gap: 6px; }
+  .sort-btn {
+    padding: 5px 12px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text-muted);
+    font-family: inherit;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .sort-btn:hover { color: var(--text); border-color: var(--border-hover); }
+  .sort-btn.active { color: var(--accent); border-color: rgba(232,201,122,0.3); background: var(--accent-dim); }
+
+  /* Grid */
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(175px, 1fr));
+    gap: 16px;
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    cursor: pointer;
+    transition: border-color 0.2s, transform 0.2s;
+    position: relative;
+  }
+  .card:hover {
+    border-color: var(--border-hover);
+    transform: translateY(-2px);
+  }
+  .card:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+
+  .poster {
+    aspect-ratio: 2/3;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 52px;
+    position: relative;
+    overflow: hidden;
+  }
+  .poster-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to bottom, transparent 50%, var(--surface) 100%);
+    pointer-events: none;
+  }
+
+  .card-body { padding: 10px 12px 14px; }
+  .card-title {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text);
+    margin-bottom: 6px;
+    line-height: 1.3;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .card-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .card-year { font-size: 12px; color: var(--text-dim); }
+  .card-rating {
+    font-size: 12px;
+    color: var(--accent);
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    font-weight: 500;
+  }
+
+  /* Genre badge on card */
+  .card-genre {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    font-size: 10px;
+    padding: 3px 8px;
+    border-radius: 999px;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    backdrop-filter: blur(4px);
+  }
+
+  /* Empty */
+  .empty {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 64px 24px;
+    color: var(--text-dim);
+  }
+  .empty-icon { font-size: 48px; margin-bottom: 16px; }
+  .empty p { font-size: 14px; }
+
+  /* Modal */
+  .overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.75);
+    z-index: 200;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    backdrop-filter: blur(4px);
+  }
+  .overlay.open { display: flex; }
+
+  .modal {
+    background: var(--surface);
+    border: 1px solid var(--border-hover);
+    border-radius: var(--radius-xl);
+    width: 100%;
+    max-width: 520px;
+    overflow: hidden;
+    position: relative;
+    animation: rise 0.2s ease;
+  }
+  @keyframes rise {
+    from { opacity: 0; transform: translateY(12px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .modal-top {
+    display: flex;
+    align-items: flex-start;
+    gap: 20px;
+    padding: 24px 24px 20px;
+  }
+  .modal-poster {
+    width: 90px;
+    height: 135px;
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 44px;
+    flex-shrink: 0;
+    border: 1px solid var(--border);
+  }
+
+  .modal-info { flex: 1; min-width: 0; padding-top: 4px; }
+  .modal-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 22px;
+    line-height: 1.2;
+    margin-bottom: 6px;
+    color: var(--text);
+  }
+  .modal-sub {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-bottom: 10px;
+  }
+  .modal-rating {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 10px;
+    font-size: 14px;
+  }
+  .stars { color: var(--accent); letter-spacing: 1px; }
+  .modal-tags { display: flex; gap: 6px; flex-wrap: wrap; }
+  .tag {
+    font-size: 11px;
+    padding: 3px 10px;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+  }
+
+  .modal-body {
+    padding: 0 24px 24px;
+    border-top: 1px solid var(--border);
+    padding-top: 16px;
+  }
+  .modal-desc {
+    font-size: 14px;
+    line-height: 1.7;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+  }
+  .modal-cast {
+    font-size: 12px;
+    color: var(--text-dim);
+  }
+
+  .modal-close {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: var(--text-muted);
+    font-size: 18px;
+    line-height: 1;
+    transition: all 0.15s;
+  }
+  .modal-close:hover { color: var(--text); border-color: var(--border-hover); }
+
+  /* Responsive */
+  @media (max-width: 600px) {
+    .grid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px; }
+    .logo { font-size: 26px; }
+    .modal-top { flex-direction: column; }
+    .modal-poster { width: 70px; height: 105px; font-size: 32px; }
+  }
+
+  /* Genre color map */
+  .g-scifi   { background: rgba(55,138,221,0.15); color: #7bb5ec; }
+  .g-drama   { background: rgba(127,119,221,0.15); color: #aba5e0; }
+  .g-thriller{ background: rgba(216,90,48,0.15); color: #e09070; }
+  .g-action  { background: rgba(186,117,23,0.15); color: #d4a050; }
+  .g-animation{background: rgba(99,153,34,0.15); color: #90bc55; }
+  .g-horror  { background: rgba(226,75,74,0.15); color: #e08080; }
+  .g-romance { background: rgba(212,83,126,0.15); color: #e095b5; }
+  .g-comedy  { background: rgba(29,158,117,0.15); color: #55c4a0; }
+</style>
+</head>
+<body>
+
+<div class="page">
+  <header>
+    <div class="logo">fl<em>i</em>ck</div>
+    <div class="tagline">16 curated films worth your evening</div>
+  </header>
+
+  <div class="search-row">
+    <div class="search-wrap">
+      <svg class="search-icon" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      <input type="text" id="search" placeholder="Title, director, cast…" autocomplete="off" oninput="onSearch()" />
+      <button class="clear-btn" id="clear-btn" onclick="clearSearch()" aria-label="Clear search">×</button>
+    </div>
+  </div>
+
+  <div class="filter-row">
+    <span class="filter-label">Genre</span>
+    <div id="genre-pills"></div>
+  </div>
+
+  <div class="bar">
+    <span class="count" id="count"></span>
+    <div class="sort-group">
+      <button class="sort-btn active" data-sort="rating" onclick="setSort(this)">Top rated</button>
+      <button class="sort-btn" data-sort="year-desc" onclick="setSort(this)">Newest</button>
+      <button class="sort-btn" data-sort="year-asc" onclick="setSort(this)">Oldest</button>
+      <button class="sort-btn" data-sort="title" onclick="setSort(this)">A–Z</button>
+    </div>
+  </div>
+
+  <div class="grid" id="grid"></div>
+</div>
+
+<!-- Modal -->
+<div class="overlay" id="overlay" onclick="overlayClick(event)" role="dialog" aria-modal="true" aria-labelledby="m-title">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()" aria-label="Close">×</button>
+    <div class="modal-top">
+      <div class="modal-poster" id="m-poster"></div>
+      <div class="modal-info">
+        <div class="modal-title" id="m-title"></div>
+        <div class="modal-sub" id="m-sub"></div>
+        <div class="modal-rating">
+          <span class="stars" id="m-stars"></span>
+          <span id="m-score" style="font-size:13px;color:var(--text-muted)"></span>
+        </div>
+        <div class="modal-tags" id="m-tags"></div>
+      </div>
+    </div>
+    <div class="modal-body">
+      <div class="modal-desc" id="m-desc"></div>
+      <div class="modal-cast" id="m-cast"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const MOVIES = [
+  { id:1,  title:"Inception",              year:2010, director:"Christopher Nolan",     rating:8.8, genre:"Sci-Fi",     emoji:"🌀", desc:"A skilled thief is offered the chance to have his criminal record erased if he can plant an idea into a target's subconscious — a heist performed within the architecture of dreams.", cast:"Leonardo DiCaprio, Joseph Gordon-Levitt, Elliot Page" },
+  { id:2,  title:"The Godfather",          year:1972, director:"Francis Ford Coppola",  rating:9.2, genre:"Drama",     emoji:"🌹", desc:"The aging patriarch of an organized crime dynasty transfers control of his empire to his reluctant youngest son, setting off a chain of violence and betrayal.", cast:"Marlon Brando, Al Pacino, James Caan" },
+  { id:3,  title:"Parasite",               year:2019, director:"Bong Joon-ho",          rating:8.5, genre:"Thriller",  emoji:"🏠", desc:"Greed and class discrimination threaten the newly formed symbiotic relationship between two families, as a clever deception slowly spirals beyond anyone's control.", cast:"Song Kang-ho, Lee Sun-kyun, Cho Yeo-jeong" },
+  { id:4,  title:"Interstellar",           year:2014, director:"Christopher Nolan",     rating:8.6, genre:"Sci-Fi",    emoji:"🪐", desc:"With Earth's future uncertain, a team of astronauts travels through a wormhole in search of a new home for humanity — a mission measured in decades, not miles.", cast:"Matthew McConaughey, Anne Hathaway, Jessica Chastain" },
+  { id:5,  title:"The Dark Knight",        year:2008, director:"Christopher Nolan",     rating:9.0, genre:"Action",    emoji:"🦇", desc:"Batman must accept one of the greatest psychological tests of his ability to fight injustice when the Joker unleashes anarchy on Gotham City.", cast:"Christian Bale, Heath Ledger, Aaron Eckhart" },
+  { id:6,  title:"Spirited Away",          year:2001, director:"Hayao Miyazaki",        rating:8.6, genre:"Animation", emoji:"🏮", desc:"A sullen girl wanders into a world ruled by gods, witches, and spirits where humans are transformed into beasts — and must find her way back.", cast:"Daveigh Chase, Suzanne Pleshette, Miyu Irino" },
+  { id:7,  title:"Get Out",                year:2017, director:"Jordan Peele",          rating:7.7, genre:"Horror",    emoji:"🌿", desc:"A young Black man visits his white girlfriend's family estate for the weekend. What begins as subtle unease grows into something far more sinister.", cast:"Daniel Kaluuya, Allison Williams, Bradley Whitford" },
+  { id:8,  title:"Amélie",                 year:2001, director:"Jean-Pierre Jeunet",    rating:8.3, genre:"Romance",   emoji:"☕", desc:"A shy Parisian waitress decides to secretly improve the lives of those around her — and in doing so, stumbles into a love story of her own.", cast:"Audrey Tautou, Mathieu Kassovitz, Rufus" },
+  { id:9,  title:"Whiplash",               year:2014, director:"Damien Chazelle",       rating:8.5, genre:"Drama",     emoji:"🥁", desc:"A promising young drummer enrolls at a cutthroat conservatory where his talent is simultaneously built up and destroyed by a ferociously demanding instructor.", cast:"Miles Teller, J.K. Simmons, Paul Reiser" },
+  { id:10, title:"Mad Max: Fury Road",     year:2015, director:"George Miller",         rating:8.1, genre:"Action",    emoji:"🔥", desc:"In a post-apocalyptic wasteland, a woman flees a tyrannical warlord with his captive wives, pursued across the desert in a relentless vehicular war.", cast:"Tom Hardy, Charlize Theron, Nicholas Hoult" },
+  { id:11, title:"Eternal Sunshine",       year:2004, director:"Michel Gondry",         rating:8.3, genre:"Romance",   emoji:"🧊", desc:"After a painful breakup, a couple undergoes a procedure to erase each other from their memories. Somewhere inside the erasure, they fall in love again.", cast:"Jim Carrey, Kate Winslet, Kirsten Dunst" },
+  { id:12, title:"Hereditary",             year:2018, director:"Ari Aster",             rating:7.3, genre:"Horror",    emoji:"🕯️", desc:"After the secretive family matriarch dies, her daughter and grandchildren begin to unravel cryptic and disturbing truths about their ancestry.", cast:"Toni Collette, Milly Shapiro, Gabriel Byrne" },
+  { id:13, title:"The Grand Budapest Hotel",year:2014,director:"Wes Anderson",          rating:8.1, genre:"Comedy",    emoji:"🏨", desc:"A legendary European hotel concierge and his devoted lobby boy become embroiled in the theft of a priceless painting and a hunt for a family fortune.", cast:"Ralph Fiennes, Tony Revolori, Saoirse Ronan" },
+  { id:14, title:"Arrival",               year:2016, director:"Denis Villeneuve",       rating:7.9, genre:"Sci-Fi",    emoji:"🛸", desc:"When mysterious spacecraft appear worldwide, a linguist is recruited to communicate with the aliens — and discovers the cost of understanding their language.", cast:"Amy Adams, Jeremy Renner, Forest Whitaker" },
+  { id:15, title:"Moonlight",             year:2016, director:"Barry Jenkins",          rating:7.4, genre:"Drama",     emoji:"🌙", desc:"Across three chapters of his life, a young Black man in Miami grapples with his identity, sexuality, and the weight of the world around him.", cast:"Mahershala Ali, Ashton Sanders, Trevante Rhodes" },
+  { id:16, title:"Oldboy",               year:2003, director:"Park Chan-wook",          rating:8.4, genre:"Thriller",  emoji:"🔑", desc:"A man is imprisoned without explanation for 15 years, then released. With five days and no answers, he hunts for the truth — and finds something far worse.", cast:"Choi Min-sik, Yoo Ji-tae, Kang Hye-jung" },
+];
+
+const GENRE_CLASS = {
+  "Sci-Fi":"g-scifi","Drama":"g-drama","Thriller":"g-thriller","Action":"g-action",
+  "Animation":"g-animation","Horror":"g-horror","Romance":"g-romance","Comedy":"g-comedy"
+};
+
+let activeGenre = "All";
+let currentSort = "rating";
+
+function getGenres() {
+  return ["All", ...[...new Set(MOVIES.map(m => m.genre))].sort()];
+}
+
+function renderPills() {
+  const el = document.getElementById("genre-pills");
+  el.innerHTML = getGenres().map(g =>
+    `<button class="pill${g === activeGenre ? ' active' : ''}" onclick="setGenre('${g}')">${g}</button>`
+  ).join(" ");
+}
+
+function setGenre(g) {
+  activeGenre = g;
+  renderPills();
+  render();
+}
+
+function setSort(btn) {
+  document.querySelectorAll(".sort-btn").forEach(b => b.classList.remove("active"));
+  btn.classList.add("active");
+  currentSort = btn.dataset.sort;
+  render();
+}
+
+function filtered() {
+  const q = document.getElementById("search").value.toLowerCase().trim();
+  return MOVIES.filter(m => {
+    const gOk = activeGenre === "All" || m.genre === activeGenre;
+    const qOk = !q || [m.title, m.director, m.cast, m.genre].some(s => s.toLowerCase().includes(q));
+    return gOk && qOk;
+  });
+}
+
+function sorted(arr) {
+  return [...arr].sort((a,b) => {
+    if (currentSort === "rating")    return b.rating - a.rating;
+    if (currentSort === "year-desc") return b.year - a.year;
+    if (currentSort === "year-asc")  return a.year - b.year;
+    if (currentSort === "title")     return a.title.localeCompare(b.title);
+    return 0;
+  });
+}
+
+function starsHTML(rating) {
+  const filled = Math.round(rating / 2);
+  return Array.from({length:5},(_,i) => i < filled ? "★" : "☆").join("");
+}
+
+function render() {
+  const movies = sorted(filtered());
+  const grid = document.getElementById("grid");
+  const count = document.getElementById("count");
+  count.textContent = `${movies.length} film${movies.length !== 1 ? "s" : ""}`;
+
+  if (!movies.length) {
+    grid.innerHTML = `<div class="empty"><div class="empty-icon">🎞</div><p>No films match — try a different search or genre.</p></div>`;
+    return;
+  }
+
+  grid.innerHTML = movies.map(m => `
+    <article class="card" tabindex="0" role="button" aria-label="${m.title}, ${m.year}" onclick="openModal(${m.id})" onkeydown="if(event.key==='Enter')openModal(${m.id})">
+      <div class="poster" style="background:${posterBg(m.genre)}">
+        <span aria-hidden="true">${m.emoji}</span>
+        <span class="card-genre ${GENRE_CLASS[m.genre] || ''}">${m.genre}</span>
+        <div class="poster-overlay"></div>
+      </div>
+      <div class="card-body">
+        <div class="card-title">${m.title}</div>
+        <div class="card-meta">
+          <span class="card-year">${m.year}</span>
+          <span class="card-rating">★ ${m.rating}</span>
+        </div>
+      </div>
+    </article>
+  `).join("");
+}
+
+function posterBg(genre) {
+  const map = {
+    "Sci-Fi":"#0e1a28","Drama":"#13101f","Thriller":"#1f0e08","Action":"#1e1408",
+    "Animation":"#0f1a08","Horror":"#1a0808","Romance":"#1a0b12","Comedy":"#081a14"
+  };
+  return map[genre] || "#111";
+}
+
+function openModal(id) {
+  const m = MOVIES.find(x => x.id === id);
+  if (!m) return;
+  document.getElementById("m-poster").innerHTML = `<span style="font-size:44px">${m.emoji}</span>`;
+  document.getElementById("m-poster").style.background = posterBg(m.genre);
+  document.getElementById("m-title").textContent = m.title;
+  document.getElementById("m-sub").textContent = `${m.year}  ·  ${m.director}`;
+  document.getElementById("m-stars").textContent = starsHTML(m.rating);
+  document.getElementById("m-score").textContent = `${m.rating} / 10`;
+  document.getElementById("m-tags").innerHTML = `<span class="tag ${GENRE_CLASS[m.genre] || ''}" style="border:none">${m.genre}</span>` +
+    m.cast.split(",").slice(0,2).map(c => `<span class="tag">${c.trim()}</span>`).join("");
+  document.getElementById("m-desc").textContent = m.desc;
+  document.getElementById("m-cast").textContent = "Cast: " + m.cast;
+  document.getElementById("overlay").classList.add("open");
+  document.getElementById("overlay").focus();
+}
+
+function closeModal() {
+  document.getElementById("overlay").classList.remove("open");
+}
+
+function overlayClick(e) {
+  if (e.target === document.getElementById("overlay")) closeModal();
+}
+
+document.addEventListener("keydown", e => { if (e.key === "Escape") closeModal(); });
+
+function onSearch() {
+  const val = document.getElementById("search").value;
+  document.getElementById("clear-btn").classList.toggle("visible", val.length > 0);
+  render();
+}
+
+function clearSearch() {
+  document.getElementById("search").value = "";
+  document.getElementById("clear-btn").classList.remove("visible");
+  render();
+}
+
+renderPills();
+render();
+</script>
+</body>
+</html>
