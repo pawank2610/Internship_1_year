@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>E-Commerce Product Page</title>
+
+<style>
+
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+font-family:Arial,sans-serif;
+}
+
+body{
+background:#f4f4f4;
+padding:20px;
+}
+
+.container{
+max-width:1200px;
+margin:auto;
+}
+
+h1{
+text-align:center;
+margin-bottom:20px;
+}
+
+.product-grid{
+display:grid;
+grid-template-columns:
+repeat(auto-fit,minmax(250px,1fr));
+gap:20px;
+}
+
+.product{
+background:white;
+padding:15px;
+border-radius:10px;
+box-shadow:0 0 10px rgba(0,0,0,0.1);
+text-align:center;
+}
+
+.product img{
+width:100%;
+height:250px;
+object-fit:cover;
+border-radius:10px;
+}
+
+.product h3{
+margin:10px 0;
+}
+
+.price{
+font-size:20px;
+font-weight:bold;
+color:green;
+margin-bottom:10px;
+}
+
+.quantity{
+width:80px;
+padding:8px;
+margin-bottom:10px;
+}
+
+button{
+padding:10px 15px;
+border:none;
+background:#3498db;
+color:white;
+cursor:pointer;
+border-radius:5px;
+}
+
+button:hover{
+opacity:0.8;
+}
+
+.cart{
+margin-top:30px;
+background:white;
+padding:20px;
+border-radius:10px;
+box-shadow:0 0 10px rgba(0,0,0,0.1);
+}
+
+.cart-item{
+display:flex;
+justify-content:space-between;
+margin:10px 0;
+padding:10px;
+background:#eee;
+}
+
+.remove-btn{
+background:red;
+}
+
+.total{
+margin-top:20px;
+font-size:22px;
+font-weight:bold;
+text-align:right;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<h1>E-Commerce Product Page</h1>
+
+<div class="product-grid">
+
+<div class="product">
+
+<img src="https://picsum.photos/300/250?1">
+
+<h3>Wireless Headphones</h3>
+
+<p class="price">₹1999</p>
+
+<input
+type="number"
+min="1"
+value="1"
+class="quantity"
+id="qty1">
+
+<br>
+
+<button onclick="addToCart(
+'Wireless Headphones',
+1999,
+'qty1'
+)">
+Add To Cart
+</button>
+
+</div>
+
+<div class="product">
+
+<img src="https://picsum.photos/300/250?2">
+
+<h3>Smart Watch</h3>
+
+<p class="price">₹2999</p>
+
+<input
+type="number"
+min="1"
+value="1"
+class="quantity"
+id="qty2">
+
+<br>
+
+<button onclick="addToCart(
+'Smart Watch',
+2999,
+'qty2'
+)">
+Add To Cart
+</button>
+
+</div>
+
+<div class="product">
+
+<img src="https://picsum.photos/300/250?3">
+
+<h3>Bluetooth Speaker</h3>
+
+<p class="price">₹1499</p>
+
+<input
+type="number"
+min="1"
+value="1"
+class="quantity"
+id="qty3">
+
+<br>
+
+<button onclick="addToCart(
+'Bluetooth Speaker',
+1499,
+'qty3'
+)">
+Add To Cart
+</button>
+
+</div>
+
+</div>
+
+<div class="cart">
+
+<h2>
+Cart (<span id="cartCount">0</span>)
+</h2>
+
+<div id="cartItems"></div>
+
+<div
+class="total"
+id="totalPrice">
+Total: ₹0
+</div>
+
+</div>
+
+</div>
+
+<script>
+
+let cart = [];
+
+function addToCart(
+name,
+price,
+qtyId
+){
+
+const quantity =
+Number(
+document.getElementById(
+qtyId
+).value
+);
+
+cart.push({
+
+name,
+
+price,
+
+quantity
+
+});
+
+renderCart();
+
+}
+
+function renderCart(){
+
+const cartItems =
+document.getElementById(
+"cartItems"
+);
+
+cartItems.innerHTML="";
+
+let total = 0;
+
+cart.forEach(
+(item,index)=>{
+
+const itemTotal =
+item.price *
+item.quantity;
+
+total += itemTotal;
+
+cartItems.innerHTML +=
+
+`
+<div class="cart-item">
+
+<span>
+${item.name}
+ x ${item.quantity}
+</span>
+
+<span>
+₹${itemTotal}
+</span>
+
+<button
+class="remove-btn"
+onclick="removeItem(${index})">
+Remove
+</button>
+
+</div>
+`;
+
+});
+
+document.getElementById(
+"totalPrice"
+).innerText =
+"Total: ₹" + total;
+
+document.getElementById(
+"cartCount"
+).innerText =
+cart.length;
+
+}
+
+function removeItem(index){
+
+cart.splice(index,1);
+
+renderCart();
+
+}
+
+</script>
+
+</body>
+</html>
