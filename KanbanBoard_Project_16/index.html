@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kanban Board</title>
+
+<style>
+
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+font-family:Arial,sans-serif;
+}
+
+body{
+background:#f4f4f4;
+padding:20px;
+}
+
+h1{
+text-align:center;
+margin-bottom:20px;
+}
+
+.task-input{
+display:flex;
+gap:10px;
+margin-bottom:20px;
+}
+
+.task-input input{
+flex:1;
+padding:12px;
+}
+
+.task-input button{
+padding:12px 20px;
+background:#3498db;
+color:white;
+border:none;
+cursor:pointer;
+}
+
+.board{
+display:grid;
+grid-template-columns:repeat(3,1fr);
+gap:20px;
+}
+
+.column{
+background:white;
+padding:15px;
+border-radius:10px;
+min-height:400px;
+box-shadow:0 0 10px rgba(0,0,0,0.1);
+}
+
+.column h2{
+text-align:center;
+margin-bottom:15px;
+}
+
+.task{
+background:#3498db;
+color:white;
+padding:10px;
+margin-bottom:10px;
+border-radius:5px;
+cursor:grab;
+display:flex;
+justify-content:space-between;
+align-items:center;
+}
+
+.delete-btn{
+background:red;
+border:none;
+color:white;
+padding:5px 8px;
+cursor:pointer;
+}
+
+</style>
+</head>
+
+<body>
+
+<h1>Kanban Board</h1>
+
+<div class="task-input">
+
+<input
+type="text"
+id="taskInput"
+placeholder="Enter Task">
+
+<button onclick="addTask()">
+Add Task
+</button>
+
+</div>
+
+<div class="board">
+
+<div
+class="column"
+id="todo"
+ondragover="allowDrop(event)"
+ondrop="drop(event)">
+
+<h2>To Do</h2>
+
+</div>
+
+<div
+class="column"
+id="progress"
+ondragover="allowDrop(event)"
+ondrop="drop(event)">
+
+<h2>In Progress</h2>
+
+</div>
+
+<div
+class="column"
+id="done"
+ondragover="allowDrop(event)"
+ondrop="drop(event)">
+
+<h2>Done</h2>
+
+</div>
+
+</div>
+
+<script>
+
+let taskId = 0;
+
+function addTask(){
+
+const input =
+document.getElementById(
+"taskInput"
+);
+
+if(input.value.trim()===""){
+
+alert("Enter Task");
+
+return;
+
+}
+
+const task =
+document.createElement(
+"div"
+);
+
+task.className =
+"task";
+
+task.draggable = true;
+
+task.id =
+"task" + taskId++;
+
+task.addEventListener(
+"dragstart",
+drag
+);
+
+task.innerHTML =
+
+`
+<span>${input.value}</span>
+
+<button
+class="delete-btn"
+onclick="this.parentElement.remove()">
+X
+</button>
+`;
+
+document.getElementById(
+"todo"
+).appendChild(task);
+
+input.value = "";
+
+}
+
+function allowDrop(event){
+
+event.preventDefault();
+
+}
+
+function drag(event){
+
+event.dataTransfer.setData(
+"text",
+event.target.id
+);
+
+}
+
+function drop(event){
+
+event.preventDefault();
+
+const taskId =
+event.dataTransfer.getData(
+"text"
+);
+
+const task =
+document.getElementById(
+taskId
+);
+
+event.currentTarget.appendChild(
+task
+);
+
+}
+
+</script>
+
+</body>
+</html>
