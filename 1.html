@@ -1,0 +1,837 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fare &amp; Ledger — Travel Budget Planner</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,500&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper: #F3EDDD;
+    --paper-2: #ECE3CB;
+    --ink: #232A2C;
+    --ink-soft: #5B5A50;
+    --navy: #1F3350;
+    --stamp: #B3452D;
+    --gold: #C89B3C;
+    --route: #3F6B55;
+    --line: #D6C9A3;
+    --card: #FBF8EF;
+    --danger: #A8341F;
+  }
+
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:
+      radial-gradient(circle at 12% 8%, rgba(31,51,80,0.05), transparent 40%),
+      radial-gradient(circle at 90% 90%, rgba(179,69,45,0.05), transparent 45%),
+      var(--paper);
+    color:var(--ink);
+    font-family:'IBM Plex Sans', sans-serif;
+    min-height:100vh;
+    padding:32px 16px 80px;
+  }
+
+  .wrap{max-width:920px;margin:0 auto;}
+
+  /* ---------- Header ---------- */
+  header{
+    display:flex;
+    align-items:flex-end;
+    justify-content:space-between;
+    gap:20px;
+    padding-bottom:22px;
+    margin-bottom:28px;
+    border-bottom:2px solid var(--ink);
+    flex-wrap:wrap;
+  }
+  .brand-eyebrow{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px;
+    letter-spacing:.18em;
+    text-transform:uppercase;
+    color:var(--stamp);
+    margin:0 0 6px;
+  }
+  h1{
+    font-family:'Fraunces', serif;
+    font-weight:700;
+    font-size:clamp(30px, 5vw, 46px);
+    line-height:1;
+    margin:0;
+    letter-spacing:-0.01em;
+  }
+  h1 em{font-style:italic; font-weight:500; color:var(--navy);}
+  .tagline{
+    max-width:260px;
+    font-size:13px;
+    color:var(--ink-soft);
+    text-align:right;
+    line-height:1.5;
+  }
+
+  /* ---------- Boarding pass summary ---------- */
+  .pass{
+    position:relative;
+    background:var(--card);
+    border:1.5px solid var(--ink);
+    border-radius:14px;
+    box-shadow:0 1px 0 rgba(0,0,0,0.04), 0 14px 30px -22px rgba(31,20,10,0.4);
+    padding:26px 28px 22px;
+    margin-bottom:36px;
+    overflow:hidden;
+  }
+  .pass::before, .pass::after{
+    content:"";
+    position:absolute;
+    width:22px;height:22px;
+    background:var(--paper);
+    border:1.5px solid var(--ink);
+    border-radius:50%;
+    top:50%;
+    transform:translateY(-50%);
+  }
+  .pass::before{left:-11px;}
+  .pass::after{right:-11px;}
+
+  .pass-top{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    gap:16px;
+    flex-wrap:wrap;
+  }
+  .pass-field label{
+    display:block;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:10px;
+    letter-spacing:.14em;
+    text-transform:uppercase;
+    color:var(--ink-soft);
+    margin-bottom:4px;
+  }
+  .pass-field input, .pass-field select{
+    font-family:'Fraunces', serif;
+    font-size:19px;
+    font-weight:600;
+    color:var(--navy);
+    border:none;
+    border-bottom:1.5px dotted var(--line);
+    background:transparent;
+    padding:2px 0 4px;
+    width:100%;
+    min-width:120px;
+  }
+  .pass-field input:focus, .pass-field select:focus{outline:none; border-bottom-color:var(--stamp);}
+  .pass-field.small input, .pass-field.small select{font-size:15px; font-weight:500; font-family:'IBM Plex Mono', monospace; color:var(--ink);}
+
+  .perforation{
+    border:none;
+    border-top:1.5px dashed var(--line);
+    margin:20px 0 18px;
+  }
+
+  .overall-bar-row{display:flex; align-items:center; gap:14px; margin-bottom:6px;}
+  .overall-track{
+    flex:1;
+    height:14px;
+    border-radius:7px;
+    background:var(--paper-2);
+    border:1px solid var(--line);
+    overflow:hidden;
+  }
+  .overall-fill{height:100%; border-radius:7px 0 0 7px; transition:width .4s ease;}
+  .overall-label{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:13px;
+    white-space:nowrap;
+  }
+  .overall-sub{
+    display:flex; justify-content:space-between;
+    font-size:12px; color:var(--ink-soft);
+    font-family:'IBM Plex Mono', monospace;
+  }
+  .overall-sub .remaining-neg{color:var(--danger); font-weight:600;}
+
+  /* ---------- Section headings ---------- */
+  .section-head{
+    display:flex; align-items:baseline; gap:10px;
+    margin:0 0 14px;
+  }
+  .section-head .num{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12px;
+    color:var(--stamp);
+    border:1px solid var(--stamp);
+    border-radius:50%;
+    width:22px;height:22px;
+    display:flex; align-items:center; justify-content:center;
+    flex-shrink:0;
+  }
+  .section-head h2{
+    font-family:'Fraunces', serif;
+    font-size:20px;
+    font-weight:600;
+    margin:0;
+  }
+
+  section{margin-bottom:38px;}
+
+  /* ---------- Luggage tags (categories) ---------- */
+  .tags{display:flex; flex-direction:column; gap:10px;}
+  .tag{
+    display:grid;
+    grid-template-columns:46px 1fr auto auto;
+    align-items:center;
+    gap:14px;
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:10px 16px;
+  }
+  .punch{position:relative; width:40px; height:40px;}
+  .punch svg{transform:rotate(-90deg);}
+  .punch-pct{
+    position:absolute; inset:0;
+    display:flex; align-items:center; justify-content:center;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:9px; font-weight:600;
+    color:var(--ink-soft);
+  }
+  .tag-name-wrap input{
+    font-family:'IBM Plex Sans', sans-serif;
+    font-weight:600;
+    font-size:14px;
+    border:none;background:transparent;
+    color:var(--ink);
+    width:100%;
+    padding:2px 0;
+    border-bottom:1px solid transparent;
+  }
+  .tag-name-wrap input:focus{outline:none; border-bottom:1px solid var(--line);}
+  .tag-spend{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12px;
+    color:var(--ink-soft);
+    text-align:right;
+    min-width:120px;
+  }
+  .tag-spend b{color:var(--ink); font-weight:600;}
+  .tag-budget{display:flex; align-items:center; gap:4px;}
+  .tag-budget span{font-family:'IBM Plex Mono', monospace; font-size:12px; color:var(--ink-soft);}
+  .tag-budget input{
+    width:78px;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:13px;
+    border:none;
+    border-bottom:1px dotted var(--line);
+    background:transparent;
+    text-align:right;
+    padding:2px 0;
+  }
+  .tag-budget input:focus{outline:none; border-bottom-color:var(--stamp);}
+  .tag-remove{
+    background:none;border:none;cursor:pointer;
+    color:var(--ink-soft);
+    font-size:15px;
+    padding:2px 6px;
+    line-height:1;
+  }
+  .tag-remove:hover{color:var(--danger);}
+
+  .add-tag-btn{
+    margin-top:12px;
+    background:none;
+    border:1.5px dashed var(--line);
+    border-radius:8px;
+    padding:10px;
+    width:100%;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12px;
+    letter-spacing:.05em;
+    color:var(--ink-soft);
+    cursor:pointer;
+    text-transform:uppercase;
+  }
+  .add-tag-btn:hover{border-color:var(--stamp); color:var(--stamp);}
+
+  .budget-variance{
+    margin-top:10px;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12px;
+    color:var(--ink-soft);
+  }
+  .budget-variance b{color:var(--navy);}
+
+  /* ---------- Ticket stub / add expense form ---------- */
+  .stub{
+    background:var(--card);
+    border:1.5px solid var(--ink);
+    border-radius:12px;
+    padding:22px 24px;
+    position:relative;
+  }
+  .stub-grid{
+    display:grid;
+    grid-template-columns:1.2fr 1fr 1fr 1.4fr auto;
+    gap:14px;
+    align-items:end;
+  }
+  @media (max-width:760px){ .stub-grid{grid-template-columns:1fr 1fr;} }
+  .field label{
+    display:block;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:10px;
+    letter-spacing:.12em;
+    text-transform:uppercase;
+    color:var(--ink-soft);
+    margin-bottom:5px;
+  }
+  .field input, .field select{
+    width:100%;
+    font-family:'IBM Plex Sans', sans-serif;
+    font-size:14px;
+    padding:9px 10px;
+    border:1px solid var(--line);
+    border-radius:7px;
+    background:var(--paper);
+    color:var(--ink);
+  }
+  .field input:focus, .field select:focus{outline:none; border-color:var(--navy);}
+  .btn-primary{
+    background:var(--navy);
+    color:var(--paper);
+    border:none;
+    border-radius:7px;
+    padding:10px 18px;
+    font-family:'IBM Plex Sans', sans-serif;
+    font-weight:600;
+    font-size:14px;
+    cursor:pointer;
+    white-space:nowrap;
+  }
+  .btn-primary:hover{background:var(--stamp);}
+
+  /* ---------- Manifest (expense log) ---------- */
+  .manifest{
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:12px;
+    overflow:hidden;
+  }
+  table{width:100%; border-collapse:collapse;}
+  thead th{
+    text-align:left;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:10px;
+    letter-spacing:.1em;
+    text-transform:uppercase;
+    color:var(--ink-soft);
+    padding:12px 16px;
+    border-bottom:1px solid var(--line);
+    background:var(--paper-2);
+  }
+  tbody td{
+    padding:11px 16px;
+    font-size:13.5px;
+    border-bottom:1px solid var(--line);
+    vertical-align:middle;
+  }
+  tbody tr:last-child td{border-bottom:none;}
+  tbody tr:hover{background:rgba(200,155,60,0.08);}
+  td.amount{font-family:'IBM Plex Mono', monospace; text-align:right; font-weight:600;}
+  td.cat-pill{white-space:nowrap;}
+  .pill{
+    display:inline-block;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:10.5px;
+    padding:3px 9px;
+    border-radius:999px;
+    background:var(--navy);
+    color:var(--paper);
+    letter-spacing:.03em;
+  }
+  .del-btn{
+    background:none;border:none;cursor:pointer;
+    color:var(--ink-soft);
+    font-size:15px;
+  }
+  .del-btn:hover{color:var(--danger);}
+  .empty-row td{
+    text-align:center;
+    padding:26px;
+    color:var(--ink-soft);
+    font-style:italic;
+    font-family:'Fraunces', serif;
+  }
+
+  /* ---------- Breakdown / compass chart ---------- */
+  .breakdown{
+    display:grid;
+    grid-template-columns:auto 1fr;
+    gap:36px;
+    align-items:center;
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:12px;
+    padding:24px 26px;
+  }
+  @media (max-width:640px){ .breakdown{grid-template-columns:1fr; justify-items:center; text-align:center;} }
+  .legend{display:flex; flex-direction:column; gap:9px;}
+  .legend-row{display:flex; align-items:center; gap:10px; font-size:13px;}
+  .legend-swatch{width:11px; height:11px; border-radius:3px; flex-shrink:0;}
+  .legend-name{flex:1;}
+  .legend-val{font-family:'IBM Plex Mono', monospace; color:var(--ink-soft);}
+
+  /* ---------- Footer / data actions ---------- */
+  .data-actions{
+    display:flex;
+    gap:12px;
+    justify-content:center;
+    flex-wrap:wrap;
+    margin-top:44px;
+    padding-top:22px;
+    border-top:1.5px dashed var(--line);
+  }
+  .btn-ghost{
+    background:none;
+    border:1px solid var(--ink);
+    color:var(--ink);
+    border-radius:7px;
+    padding:9px 16px;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12px;
+    letter-spacing:.04em;
+    cursor:pointer;
+  }
+  .btn-ghost:hover{background:var(--ink); color:var(--paper);}
+  .foot-note{
+    text-align:center;
+    font-size:11.5px;
+    color:var(--ink-soft);
+    margin-top:12px;
+    font-family:'IBM Plex Mono', monospace;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div>
+      <p class="brand-eyebrow">Fare &amp; Ledger · No. 001</p>
+      <h1>Travel <em>Budget</em> Ledger</h1>
+    </div>
+    <p class="tagline">Set the trip budget, log every fare and receipt, and watch the remaining balance clear customs in real time.</p>
+  </header>
+
+  <!-- BOARDING PASS SUMMARY -->
+  <div class="pass">
+    <div class="pass-top">
+      <div class="pass-field" style="flex:2; min-width:200px;">
+        <label>Trip</label>
+        <input id="tripName" type="text" value="Lisbon &amp; the Algarve" />
+      </div>
+      <div class="pass-field small">
+        <label>Depart</label>
+        <input id="tripStart" type="date" />
+      </div>
+      <div class="pass-field small">
+        <label>Return</label>
+        <input id="tripEnd" type="date" />
+      </div>
+      <div class="pass-field small">
+        <label>Currency</label>
+        <select id="currency">
+          <option value="$">USD  $</option>
+          <option value="€">EUR  €</option>
+          <option value="£">GBP  £</option>
+          <option value="₹" selected>INR  ₹</option>
+          <option value="¥">JPY  ¥</option>
+          <option value="A$">AUD A$</option>
+        </select>
+      </div>
+      <div class="pass-field small">
+        <label>Total budget</label>
+        <input id="totalBudget" type="number" min="0" step="1" value="150000" />
+      </div>
+    </div>
+
+    <hr class="perforation" />
+
+    <div class="overall-bar-row">
+      <span class="overall-label" id="spentLabel">₹0 spent</span>
+      <div class="overall-track"><div class="overall-fill" id="overallFill" style="width:0%; background:var(--route);"></div></div>
+      <span class="overall-label" id="pctLabel">0%</span>
+    </div>
+    <div class="overall-sub">
+      <span id="remainingLabel">Remaining: ₹150,000</span>
+      <span id="perDayLabel">—</span>
+    </div>
+  </div>
+
+  <!-- CATEGORY BUDGETS -->
+  <section>
+    <div class="section-head"><span class="num">1</span><h2>Allocate by category</h2></div>
+    <div class="tags" id="tagList"></div>
+    <button class="add-tag-btn" id="addTag">+ Add another luggage tag (category)</button>
+    <p class="budget-variance" id="variance"></p>
+  </section>
+
+  <!-- ADD EXPENSE -->
+  <section>
+    <div class="section-head"><span class="num">2</span><h2>Log an expense</h2></div>
+    <div class="stub">
+      <div class="stub-grid">
+        <div class="field">
+          <label>What for</label>
+          <input id="expNote" type="text" placeholder="e.g. Airport taxi" />
+        </div>
+        <div class="field">
+          <label>Category</label>
+          <select id="expCategory"></select>
+        </div>
+        <div class="field">
+          <label>Amount</label>
+          <input id="expAmount" type="number" min="0" step="0.01" placeholder="0.00" />
+        </div>
+        <div class="field">
+          <label>Date</label>
+          <input id="expDate" type="date" />
+        </div>
+        <button class="btn-primary" id="addExpense">Stamp it in</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- MANIFEST -->
+  <section>
+    <div class="section-head"><span class="num">3</span><h2>Expense manifest</h2></div>
+    <div class="manifest">
+      <table>
+        <thead>
+          <tr><th>Date</th><th>Description</th><th>Category</th><th style="text-align:right;">Amount</th><th></th></tr>
+        </thead>
+        <tbody id="expenseBody"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- BREAKDOWN -->
+  <section>
+    <div class="section-head"><span class="num">4</span><h2>Where it went</h2></div>
+    <div class="breakdown">
+      <svg id="donut" width="180" height="180" viewBox="0 0 180 180"></svg>
+      <div class="legend" id="legend"></div>
+    </div>
+  </section>
+
+  <div class="data-actions">
+    <button class="btn-ghost" id="exportBtn">Export ledger (.json)</button>
+    <button class="btn-ghost" id="importBtn">Import ledger (.json)</button>
+    <input type="file" id="importFile" accept="application/json" style="display:none;" />
+    <button class="btn-ghost" id="resetBtn">Reset trip</button>
+  </div>
+  <p class="foot-note">Data lives only in this open tab — export before you close it if you want to keep your ledger.</p>
+
+</div>
+
+<script>
+(function(){
+  const palette = ['#1F3350', '#B3452D', '#C89B3C', '#3F6B55', '#7A5C3E', '#6E4B6E', '#3A6E7A', '#8B3A3A'];
+
+  let state = {
+    trip: { name: 'Lisbon & the Algarve', start:'', end:'', currency:'₹', totalBudget: 150000 },
+    categories: [
+      { id: 'c1', name: 'Flights', budget: 40000 },
+      { id: 'c2', name: 'Lodging', budget: 45000 },
+      { id: 'c3', name: 'Food', budget: 25000 },
+      { id: 'c4', name: 'Activities', budget: 20000 },
+      { id: 'c5', name: 'Transport', budget: 12000 },
+      { id: 'c6', name: 'Misc', budget: 8000 },
+    ],
+    expenses: []
+  };
+  let nextCatId = 7;
+  let nextExpId = 1;
+
+  const $ = id => document.getElementById(id);
+
+  function fmt(n){
+    const cur = state.trip.currency;
+    const num = Number(n)||0;
+    return cur + num.toLocaleString(undefined, {maximumFractionDigits:2});
+  }
+
+  function spentByCategory(catId){
+    return state.expenses.filter(e=>e.category===catId).reduce((s,e)=>s+Number(e.amount||0),0);
+  }
+  function totalSpent(){
+    return state.expenses.reduce((s,e)=>s+Number(e.amount||0),0);
+  }
+
+  function render(){
+    renderPass();
+    renderTags();
+    renderExpenseCategoryOptions();
+    renderManifest();
+    renderDonut();
+  }
+
+  function renderPass(){
+    $('spentLabel').textContent = fmt(totalSpent()) + ' spent';
+    const budget = Number(state.trip.totalBudget)||0;
+    const spent = totalSpent();
+    const pct = budget>0 ? Math.round((spent/budget)*100) : 0;
+    $('pctLabel').textContent = pct + '%';
+    const fill = $('overallFill');
+    fill.style.width = Math.min(pct,100) + '%';
+    fill.style.background = pct>100 ? 'var(--danger)' : (pct>85 ? 'var(--gold)' : 'var(--route)');
+    const remaining = budget - spent;
+    const remEl = $('remainingLabel');
+    remEl.innerHTML = 'Remaining: ' + (remaining<0
+      ? '<span class="remaining-neg">' + fmt(remaining) + ' over</span>'
+      : fmt(remaining));
+
+    let perDay = '—';
+    if(state.trip.start && state.trip.end){
+      const d1 = new Date(state.trip.start), d2 = new Date(state.trip.end);
+      const days = Math.max(1, Math.round((d2-d1)/86400000)+1);
+      perDay = fmt(budget/days) + ' / day budgeted · ' + days + ' days';
+    }
+    $('perDayLabel').textContent = perDay;
+  }
+
+  function ring(pct, color){
+    const r = 15, c = 2*Math.PI*r;
+    const clamped = Math.max(0, Math.min(pct,100));
+    const dash = (clamped/100)*c;
+    return `<svg viewBox="0 0 40 40" width="40" height="40">
+      <circle cx="20" cy="20" r="${r}" fill="none" stroke="#E7DDBF" stroke-width="5"/>
+      <circle cx="20" cy="20" r="${r}" fill="none" stroke="${color}" stroke-width="5"
+        stroke-dasharray="${dash} ${c-dash}" stroke-linecap="round" transform="rotate(-90 20 20)"/>
+    </svg>`;
+  }
+
+  function renderTags(){
+    const list = $('tagList');
+    list.innerHTML = '';
+    let allocated = 0;
+    state.categories.forEach((cat, idx)=>{
+      const spent = spentByCategory(cat.id);
+      const budget = Number(cat.budget)||0;
+      allocated += budget;
+      const pct = budget>0 ? Math.round((spent/budget)*100) : (spent>0?100:0);
+      const color = pct>100 ? '#A8341F' : palette[idx % palette.length];
+
+      const row = document.createElement('div');
+      row.className = 'tag';
+      row.innerHTML = `
+        <div class="punch">${ring(pct, color)}<div class="punch-pct">${pct}%</div></div>
+        <div class="tag-name-wrap">
+          <input type="text" value="${cat.name}" data-cat="${cat.id}" class="cat-name-input" />
+          <div class="tag-spend">${fmt(spent)} <span style="opacity:.6">spent of</span> <b>${fmt(budget)}</b></div>
+        </div>
+        <div class="tag-budget">
+          <span>${state.trip.currency}</span>
+          <input type="number" min="0" step="1" value="${cat.budget}" data-cat="${cat.id}" class="cat-budget-input" />
+        </div>
+        <button class="tag-remove" data-cat="${cat.id}" title="Remove category">✕</button>
+      `;
+      list.appendChild(row);
+    });
+
+    list.querySelectorAll('.cat-name-input').forEach(inp=>{
+      inp.addEventListener('input', e=>{
+        const cat = state.categories.find(c=>c.id===e.target.dataset.cat);
+        if(cat) cat.name = e.target.value;
+        renderExpenseCategoryOptions();
+        renderManifest();
+        renderDonut();
+      });
+    });
+    list.querySelectorAll('.cat-budget-input').forEach(inp=>{
+      inp.addEventListener('input', e=>{
+        const cat = state.categories.find(c=>c.id===e.target.dataset.cat);
+        if(cat) cat.budget = e.target.value;
+        renderTags();
+      });
+    });
+    list.querySelectorAll('.tag-remove').forEach(btn=>{
+      btn.addEventListener('click', e=>{
+        const id = e.target.dataset.cat;
+        state.categories = state.categories.filter(c=>c.id!==id);
+        state.expenses = state.expenses.filter(ex=>ex.category!==id);
+        render();
+      });
+    });
+
+    const totalBudget = Number(state.trip.totalBudget)||0;
+    const diff = totalBudget - allocated;
+    $('variance').innerHTML = diff===0
+      ? `Fully allocated — every rupee of the <b>${fmt(totalBudget)}</b> budget has a category.`
+      : diff>0
+        ? `<b>${fmt(diff)}</b> of the ${fmt(totalBudget)} budget is still unallocated.`
+        : `Categories total <b>${fmt(allocated)}</b> — that's ${fmt(-diff)} more than the ${fmt(totalBudget)} budget.`;
+  }
+
+  function renderExpenseCategoryOptions(){
+    const sel = $('expCategory');
+    const current = sel.value;
+    sel.innerHTML = state.categories.map(c=>`<option value="${c.id}">${c.name}</option>`).join('');
+    if(state.categories.some(c=>c.id===current)) sel.value = current;
+  }
+
+  function renderManifest(){
+    const body = $('expenseBody');
+    if(state.expenses.length===0){
+      body.innerHTML = '<tr class="empty-row"><td colspan="5">No stamps yet — log your first expense above.</td></tr>';
+      return;
+    }
+    const sorted = [...state.expenses].sort((a,b)=> (b.date||'').localeCompare(a.date||''));
+    body.innerHTML = sorted.map(e=>{
+      const cat = state.categories.find(c=>c.id===e.category);
+      return `<tr>
+        <td>${e.date || '—'}</td>
+        <td>${e.note || '<span style="opacity:.5">Untitled</span>'}</td>
+        <td class="cat-pill"><span class="pill">${cat ? cat.name : 'Uncategorized'}</span></td>
+        <td class="amount">${fmt(e.amount)}</td>
+        <td><button class="del-btn" data-id="${e.id}" title="Delete">✕</button></td>
+      </tr>`;
+    }).join('');
+    body.querySelectorAll('.del-btn').forEach(btn=>{
+      btn.addEventListener('click', e=>{
+        const id = Number(e.target.dataset.id);
+        state.expenses = state.expenses.filter(ex=>ex.id!==id);
+        render();
+      });
+    });
+  }
+
+  function renderDonut(){
+    const svg = $('donut');
+    const legend = $('legend');
+    const data = state.categories.map((c,i)=>({name:c.name, value: spentByCategory(c.id), color: palette[i%palette.length]}))
+      .filter(d=>d.value>0);
+    const total = data.reduce((s,d)=>s+d.value,0);
+
+    if(total===0){
+      svg.innerHTML = `<circle cx="90" cy="90" r="70" fill="none" stroke="#E7DDBF" stroke-width="20"/>
+        <text x="90" y="94" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="12" fill="#5B5A50">no spend yet</text>`;
+      legend.innerHTML = '<div class="legend-row" style="color:var(--ink-soft); font-style:italic;">Log an expense to see the breakdown.</div>';
+      return;
+    }
+
+    const r = 70, cx=90, cy=90, c = 2*Math.PI*r;
+    let offset = 0;
+    let circles = '';
+    data.forEach(d=>{
+      const frac = d.value/total;
+      const dash = frac*c;
+      circles += `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${d.color}" stroke-width="20"
+        stroke-dasharray="${dash} ${c-dash}" stroke-dashoffset="${-offset}" transform="rotate(-90 ${cx} ${cy})"/>`;
+      offset += dash;
+    });
+    svg.innerHTML = circles + `<text x="90" y="86" text-anchor="middle" font-family="Fraunces, serif" font-weight="600" font-size="18" fill="var(--ink)">${fmt(total)}</text>
+      <text x="90" y="104" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="10" fill="var(--ink-soft)">TOTAL SPENT</text>`;
+
+    legend.innerHTML = data.map(d=>`
+      <div class="legend-row">
+        <span class="legend-swatch" style="background:${d.color}"></span>
+        <span class="legend-name">${d.name}</span>
+        <span class="legend-val">${fmt(d.value)} · ${Math.round((d.value/total)*100)}%</span>
+      </div>
+    `).join('');
+  }
+
+  // ---- Event wiring ----
+  $('tripName').addEventListener('input', e=>{ state.trip.name = e.target.value; });
+  $('tripStart').addEventListener('input', e=>{ state.trip.start = e.target.value; renderPass(); });
+  $('tripEnd').addEventListener('input', e=>{ state.trip.end = e.target.value; renderPass(); });
+  $('currency').addEventListener('change', e=>{ state.trip.currency = e.target.value; render(); });
+  $('totalBudget').addEventListener('input', e=>{ state.trip.totalBudget = e.target.value; renderPass(); renderTags(); });
+
+  $('addTag').addEventListener('click', ()=>{
+    const id = 'c' + (nextCatId++);
+    state.categories.push({ id, name: 'New category', budget: 0 });
+    render();
+  });
+
+  $('addExpense').addEventListener('click', ()=>{
+    const note = $('expNote').value.trim();
+    const category = $('expCategory').value;
+    const amount = Number($('expAmount').value);
+    const date = $('expDate').value;
+    if(!amount || amount<=0){
+      $('expAmount').focus();
+      return;
+    }
+    state.expenses.push({ id: nextExpId++, note, category, amount, date });
+    $('expNote').value = '';
+    $('expAmount').value = '';
+    render();
+  });
+
+  $('exportBtn').addEventListener('click', ()=>{
+    const payload = JSON.stringify({ state, nextCatId, nextExpId }, null, 2);
+    const blob = new Blob([payload], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const safeName = (state.trip.name || 'trip').replace(/[^a-z0-9]+/gi,'-').toLowerCase();
+    a.href = url;
+    a.download = `${safeName || 'travel-budget'}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  });
+
+  $('importBtn').addEventListener('click', ()=> $('importFile').click());
+  $('importFile').addEventListener('change', e=>{
+    const file = e.target.files[0];
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = evt=>{
+      try{
+        const parsed = JSON.parse(evt.target.result);
+        if(parsed.state){
+          state = parsed.state;
+          nextCatId = parsed.nextCatId || (Math.max(0,...state.categories.map(c=>Number((c.id||'c0').slice(1))||0))+1);
+          nextExpId = parsed.nextExpId || (Math.max(0,...state.expenses.map(x=>x.id||0))+1);
+          syncPassInputs();
+          render();
+        }
+      }catch(err){
+        alert('That file could not be read as a ledger export.');
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = '';
+  });
+
+  $('resetBtn').addEventListener('click', ()=>{
+    if(!confirm('Clear the current trip and start a fresh ledger?')) return;
+    state = {
+      trip: { name: 'New trip', start:'', end:'', currency: state.trip.currency, totalBudget: 0 },
+      categories: [],
+      expenses: []
+    };
+    nextCatId = 1; nextExpId = 1;
+    syncPassInputs();
+    render();
+  });
+
+  function syncPassInputs(){
+    $('tripName').value = state.trip.name;
+    $('tripStart').value = state.trip.start;
+    $('tripEnd').value = state.trip.end;
+    $('currency').value = state.trip.currency;
+    $('totalBudget').value = state.trip.totalBudget;
+  }
+
+  syncPassInputs();
+  render();
+})();
+</script>
+</body>
+</html>
